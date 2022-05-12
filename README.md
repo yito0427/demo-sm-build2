@@ -1,93 +1,96 @@
-Welcome to the AWS CodeStar sample web service
-==============================================
+## Layout of the SageMaker ModelBuild Project Template
 
-This sample code helps get you started with a simple Python web service using
-AWS Lambda and Amazon API Gateway.
+The template provides a starting point for bringing your SageMaker Pipeline development to production.
 
-What's Here
------------
+```
+|-- codebuild-buildspec.yml
+|-- CONTRIBUTING.md
+|-- pipelines
+|   |-- abalone
+|   |   |-- evaluate.py
+|   |   |-- __init__.py
+|   |   |-- pipeline.py
+|   |   `-- preprocess.py
+|   |-- get_pipeline_definition.py
+|   |-- __init__.py
+|   |-- run_pipeline.py
+|   |-- _utils.py
+|   `-- __version__.py
+|-- README.md
+|-- sagemaker-pipelines-project.ipynb
+|-- setup.cfg
+|-- setup.py
+|-- tests
+|   `-- test_pipelines.py
+`-- tox.ini
+```
 
-This sample includes:
+## Start here
+This is a sample code repository that demonstrates how you can organize your code for an ML business solution. This code repository is created as part of creating a Project in SageMaker. 
 
-* README.md - this file
-* buildspec.yml - this file is used by AWS CodeBuild to package your
-  application for deployment to AWS Lambda
-* index.py - this file contains the sample Python code for the web service
-* template.yml - this file contains the AWS Serverless Application Model (AWS SAM) used
-  by AWS CloudFormation to deploy your application to AWS Lambda and Amazon API
-  Gateway.
-* tests/ - this directory contains unit tests for your application
-* template-configuration.json - this file contains the project ARN with placeholders used for tagging resources with the project ID
+In this example, we are solving the abalone age prediction problem using the abalone dataset (see below for more on the dataset). The following section provides an overview of how the code is organized and what you need to modify. In particular, `pipelines/pipelines.py` contains the core of the business logic for this problem. It has the code to express the ML steps involved in generating an ML model. You will also find the code for that supports preprocessing and evaluation steps in `preprocess.py` and `evaluate.py` files respectively.
 
-Getting Started
----------------
+Once you understand the code structure described below, you can inspect the code and you can start customizing it for your own business case. This is only sample code, and you own this repository for your business use case. Please go ahead, modify the files, commit them and see the changes kick off the SageMaker pipelines in the CICD system.
 
-These directions assume you want to develop on your development environment or a Cloud9 environment.
+You can also use the `sagemaker-pipelines-project.ipynb` notebook to experiment from SageMaker Studio before you are ready to checkin your code.
 
-To work on the sample code, you'll need to clone your project's repository to your
-local computer. If you haven't, do that first. You can find instructions in the AWS CodeStar user guide at https://docs.aws.amazon.com/codestar/latest/userguide/getting-started.html#clone-repo.
+A description of some of the artifacts is provided below:
+<br/><br/>
+Your codebuild execution instructions. This file contains the instructions needed to kick off an execution of the SageMaker Pipeline in the CICD system (via CodePipeline). You will see that this file has the fields definined for naming the Pipeline, ModelPackageGroup etc. You can customize them as required.
 
-1. Create a Python virtual environment. This virtual
-   environment allows you to isolate this project and install any packages you
-   need without affecting the system Python installation. At the terminal, type
-   the following command:
+```
+|-- codebuild-buildspec.yml
+```
 
-        $ virtualenv .venv
+<br/><br/>
+Your pipeline artifacts, which includes a pipeline module defining the required `get_pipeline` method that returns an instance of a SageMaker pipeline, a preprocessing script that is used in feature engineering, and a model evaluation script to measure the Mean Squared Error of the model that's trained by the pipeline. This is the core business logic, and if you want to create your own folder, you can do so, and implement the `get_pipeline` interface as illustrated here.
 
-2. Activate the virtual environment:
+```
+|-- pipelines
+|   |-- abalone
+|   |   |-- evaluate.py
+|   |   |-- __init__.py
+|   |   |-- pipeline.py
+|   |   `-- preprocess.py
 
-        $ source .venv/bin/activate
+```
+<br/><br/>
+Utility modules for getting pipeline definition jsons and running pipelines (you do not typically need to modify these):
 
-3. Install the SAM CLI. For details see 
-   https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html
+```
+|-- pipelines
+|   |-- get_pipeline_definition.py
+|   |-- __init__.py
+|   |-- run_pipeline.py
+|   |-- _utils.py
+|   `-- __version__.py
+```
+<br/><br/>
+Python package artifacts:
+```
+|-- setup.cfg
+|-- setup.py
+```
+<br/><br/>
+A stubbed testing module for testing your pipeline as you develop:
+```
+|-- tests
+|   `-- test_pipelines.py
+```
+<br/><br/>
+The `tox` testing framework configuration:
+```
+`-- tox.ini
+```
 
-4. Start the development server:
+## Dataset for the Example Abalone Pipeline
 
-        $ sam local start-api -p 8080
+The dataset used is the [UCI Machine Learning Abalone Dataset](https://archive.ics.uci.edu/ml/datasets/abalone) [1]. The aim for this task is to determine the age of an abalone (a kind of shellfish) from its physical measurements. At the core, it's a regression problem. 
+    
+The dataset contains several features - length (longest shell measurement), diameter (diameter perpendicular to length), height (height with meat in the shell), whole_weight (weight of whole abalone), shucked_weight (weight of meat), viscera_weight (gut weight after bleeding), shell_weight (weight after being dried), sex ('M', 'F', 'I' where 'I' is Infant), as well as rings (integer).
 
-5. Open http://127.0.0.1:8080/ in a web browser to view your service.
+The number of rings turns out to be a good approximation for age (age is rings + 1.5). However, to obtain this number requires cutting the shell through the cone, staining the section, and counting the number of rings through a microscope -- a time-consuming task. However, the other physical measurements are easier to determine. We use the dataset to build a predictive model of the variable rings through these other physical measurements.
 
-What Do I Do Next?
-------------------
+We'll upload the data to a bucket we own. But first we gather some constants we can use later throughout the notebook.
 
-If you have checked out a local copy of your repository you can start making changes
-to the sample code.  We suggest making a small change to index.py first, so you can
-see how changes pushed to your project's repository are automatically picked up by your
-project pipeline and deployed to AWS Lambda and Amazon API Gateway. (You can watch the pipeline
-progress on your AWS CodeStar project dashboard.)Once you've seen how that works,
-start developing your own code, and have fun!
-
-To run your tests locally, go to the root directory of the
-sample code and run the `python -m unittest discover tests` command, which
-AWS CodeBuild also runs through your `buildspec.yml` file.
-
-To test your new code during the release process, modify the existing tests or
-add tests to the tests directory. AWS CodeBuild will run the tests during the
-build stage of your project pipeline. You can find the test results
-in the AWS CodeBuild console.
-
-Learn more about AWS CodeBuild and how it builds and tests your application here:
-https://docs.aws.amazon.com/codebuild/latest/userguide/concepts.html
-
-Learn more about AWS Serverless Application Model (AWS SAM) and how it works here:
-https://github.com/awslabs/serverless-application-model/blob/master/HOWTO.md
-
-AWS Lambda Developer Guide:
-https://docs.aws.amazon.com/lambda/latest/dg/deploying-lambda-apps.html
-
-Learn more about AWS CodeStar by reading the user guide, and post questions and
-comments about AWS CodeStar on our forum.
-
-User Guide: https://docs.aws.amazon.com/codestar/latest/userguide/welcome.html
-
-Forum: https://forums.aws.amazon.com/forum.jspa?forumID=248
-
-What Should I Do Before Running My Project in Production?
-------------------
-
-AWS recommends you review the security best practices recommended by the framework
-author of your selected sample application before running it in production. You
-should also regularly review and apply any available patches or associated security
-advisories for dependencies used within your application.
-
-Best Practices: https://docs.aws.amazon.com/codestar/latest/userguide/best-practices.html?icmpid=docs_acs_rm_sec
+[1] Dua, D. and Graff, C. (2019). [UCI Machine Learning Repository](http://archive.ics.uci.edu/ml). Irvine, CA: University of California, School of Information and Computer Science.
