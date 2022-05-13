@@ -12,6 +12,13 @@ phases:
       - export PYTHONUNBUFFERED=TRUE
       - export SAGEMAKER_PROJECT_NAME_ID="${SAGEMAKER_PROJECT_NAME}-${SAGEMAKER_PROJECT_ID}"
       - echo $SAGEMAKER_PIPELINE_ROLE_ARN
+      - echo $SAGEMAKER_PROJECT_NAME
+      - echo $SAGEMAKER_PROJECT_ID
+      - echo $AWS_REGION
+      - echo $SAGEMAKER_PROJECT_ARN
+      - echo $SAGEMAKER_PIPELINE_ROLE_ARN
+      - echo $ARTIFACT_BUCKET
+      - echo $SAGEMAKER_PROJECT_NAME_ID
       - |
         run-pipeline --module-name pipelines.customer_churn.pipeline \
           --role-arn $SAGEMAKER_PIPELINE_ROLE_ARN \
